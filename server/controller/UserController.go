@@ -71,6 +71,40 @@ func (uc UserController) GetAllUsers(w http.ResponseWriter, r *http.Request, p h
 }
 
 // GetUser retrieves an individual user resource
+func (uc UserController) UpdateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	// Grab id
+	id := p.ByName("id")
+	log.Info(id)
+
+	// Verify id is ObjectId, otherwise bail
+	if !bson.IsObjectIdHex(id) {
+		w.WriteHeader(404)
+		return
+	}
+	oid := bson.ObjectIdHex(id)
+
+	u := models.USER{}
+	// Populate the user data
+	json.NewDecoder(r.Body).Decode(&u)
+	// Grab id
+
+	log.Info("here")
+	if err := uc.session.DB(ndpdbname).C("users").Update(bson.M{"_id": oid}, bson.M{"$set": u}); err != nil {
+		log.Info(err)
+		w.WriteHeader(404)
+		return
+	}
+
+	// Marshal provided interface into JSON structure
+	uj, _ := json.Marshal(u)
+
+	// Write content-type, statuscode, payload
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	fmt.Fprintf(w, "%s", uj)
+}
+
+// GetUser retrieves an individual user resource
 func (uc UserController) GetUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	// Grab id
 	id := p.ByName("id")
@@ -101,4 +135,28 @@ func (uc UserController) GetUser(w http.ResponseWriter, r *http.Request, p httpr
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	fmt.Fprintf(w, "%s", uj)
+}
+
+// RemoveUser removes an existing user resource
+func (uc UserController) DeleteUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	// Grab id
+	id := p.ByName("id")
+
+	// Verify id is ObjectId, otherwise bail
+	if !bson.IsObjectIdHex(id) {
+		w.WriteHeader(404)
+		return
+	}
+
+	// Grab id
+	oid := bson.ObjectIdHex(id)
+
+	// Remove user
+	if err := uc.session.DB(ndpdbname).C("users").RemoveId(oid); err != nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	// Write status
+	w.WriteHeader(200)
 }

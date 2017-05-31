@@ -58,10 +58,15 @@ func main() {
 	router.POST("/", IndexPost)
 	router.GET("/hello/:name", Hello)
 
+	// User Controller
 	uc := controller.NewUserController(getSession())
 	router.POST("/user", uc.CreateUser)
 	router.GET("/user/:id", uc.GetUser)
+	router.PUT("/user/:id", uc.UpdateUser)
+	router.DELETE("/user/:id", uc.DeleteUser)
 	router.GET("/users", uc.GetAllUsers)
+
+	//Jobs Controller
 
 	log.Info("Started server on localhost:8080")
 	http.ListenAndServe(":8080", &APIServer{router})
