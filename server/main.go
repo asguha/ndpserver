@@ -9,6 +9,7 @@ import (
 	mgo "gopkg.in/mgo.v2"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/asguha/ndpserver/server/controller"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -40,8 +41,7 @@ func IndexPost(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func Hello(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	i++
-	u := User{Id: i, Name: ps.ByName("name")}
+	u := User{Id: 1, Name: ps.ByName("name")}
 	js, err := json.Marshal(u)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -57,6 +57,12 @@ func main() {
 	router.GET("/", Index)
 	router.POST("/", IndexPost)
 	router.GET("/hello/:name", Hello)
+
+	uc := controller.NewUserController(getSession())
+	router.POST("/user", uc.CreateUser)
+	router.GET("/user/:id", uc.GetUser)
+	router.GET("/users", uc.GetAllUsers)
+
 	log.Info("Started server on localhost:8080")
 	http.ListenAndServe(":8080", &APIServer{router})
 }
